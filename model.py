@@ -8,16 +8,21 @@ db = (pw.MySQLDatabase(
             user=os.environ['CTC_NEWS_USER'],
             passwd=os.environ['CTC_NEWS_PASSWORD']))
 
+
 class MySQLModel(pw.Model):
     """A base model that will use our MySQL database"""
     class Meta:
         database = db
 
-class BitcoinNews(MySQLModel):
+class News(MySQLModel):
     timestamp = pw.DateTimeField(null=True)
     title = pw.TextField(null=True)
+    body = pw.TextField(null=True)
     source = pw.TextField(null=True)
     link = pw.TextField(null=True)
-    linkHash = pw.CharField(primary_key=True)
+    bitcoinBoolean=pw.BooleanField(null=True)
+    ethereumBoolean=pw.BooleanField(null=True)
+    finished=pw.BooleanField(null=False,default=False)
     class Meta:
-        db_table = 'BitcoinNews'
+        db_table = 'News'
+        
