@@ -8,7 +8,6 @@ db = (pw.MySQLDatabase(
             user=os.environ['CTC_NEWS_USER'],
             passwd=os.environ['CTC_NEWS_PASSWORD']))
 
-
 class MySQLModel(pw.Model):
     """A base model that will use our MySQL database"""
     class Meta:
@@ -25,4 +24,3 @@ class News(MySQLModel):
     finished=pw.BooleanField(null=False,default=False)
     class Meta:
         db_table = 'News'
-        
