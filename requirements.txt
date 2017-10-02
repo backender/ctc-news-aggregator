@@ -1,5 +1,6 @@
 feedparser
 pytz
 peewee
-hashlib
 scrapy
+python-dateutil
+PyMySQL
