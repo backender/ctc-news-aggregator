@@ -15,23 +15,6 @@ logging.getLogger('peewee').propagate = False
 
 db.get_conn()
 db.create_table(News, safe=True)
-#Init crawler
-process = CrawlerProcess(get_project_settings())
-
-#Recrawl unfinished records in the database 
-try:
-    lastID=0
-    while True:
-        un=News.select(News.id,News.link, News.source).where( News.id>lastID, News.finished == False).get()
-        lastID=un.id
-        process.crawl(un.source, urls=[un.link])
-        print('Recrawling the news with id '+ str(lastID)+' | '+un.source+' | '+un.link)
-except:
-    print('No unfinished news found anymore')
-
-#Parse feed
-feed = "http://feed.informer.com/digests/I2GGLAVR70/feeder.rss"
-d = feedparser.parse(feed)
 
 def decodeText(text):
     text = "".join(i for i in text if ord(i)<128)
@@ -47,10 +30,8 @@ def hasAvailableSpider(source):
              'themerkle.com',
              'bitcoinmagazine.com/articles/',
              'zerohedge.com']
-    if source in spiders:
-        return True
-    else: 
-        return False
+    return source in spiders
+
 def fixSource(source,link):
     #get rid of http start
     source=source.split('://')[1]
@@ -65,6 +46,9 @@ def fixSource(source,link):
     if('bitcoinmagazine.com/articles/'in link):
         source='bitcoinmagazine.com/articles/'
     return source
+#Parse feed
+feed = "http://feed.informer.com/digests/I2GGLAVR70/feeder.rss"
+d = feedparser.parse(feed)
 
 for post in d.entries:
     post.source['href']=fixSource(post.source['href'],post.link)
@@ -80,13 +64,12 @@ for post in d.entries:
                                link=post.link,
                                finished=False)
             databaseObject.save()
-            process.crawl(post.source['href'], urls=[str(post.link)])
         else:
             print('No spider: ' + post.source['href'] )
             print(post.link)
 
 #second feed            
-feedsToConsider=100
+feedsToConsider=50
 feed = "http://www.bitnewz.net/rss/feed/"+str(feedsToConsider)
 d = feedparser.parse(feed)
 
@@ -112,11 +95,20 @@ for post in d['entries']:
                                source=post['source'],
                                link=post['link'])
             databaseObject.save()
-            process.crawl(post['source'], urls=[str(post['link'])])
         else:
             print('No spider: ' + post['source'] )
             print(post['link'])
 
 
+#Init crawler
+process = CrawlerProcess(get_project_settings())
+#Recrawl unfinished records in the database 
+try:
+    for article in list(News.select(News.link, News.source).where(News.finished == False)):
+        process.crawl(article.source, urls=[article.link])
+        print('Crawling article ' + article.link)
+except:
+    print('No unfinished news found')
+    
 process.start()   
 
